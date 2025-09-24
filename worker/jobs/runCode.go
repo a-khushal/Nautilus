@@ -12,9 +12,9 @@ var langMap = map[string]struct {
 	Ext   string
 	Image string
 }{
-	"python": {Ext: "py", Image: "python-runner:latest"},
-	"cpp":    {Ext: "cpp", Image: "cpp-runner:latest"},
-	"java":   {Ext: "java", Image: "java-runner:latest"},
+	"python3": {Ext: "py", Image: "python-runner:latest"},
+	"cpp":     {Ext: "cpp", Image: "cpp-runner:latest"},
+	"java":    {Ext: "java", Image: "java-runner:latest"},
 }
 
 func RunCodeJob(job models.Job) {
@@ -42,16 +42,25 @@ func RunCodeJob(job models.Job) {
 		return
 	}
 
-	cmd := exec.Command(
-		"docker", "run", "--rm",
+	var innerCmd string
+	if lang == "cpp" {
+		binName := fmt.Sprintf("/tmp/code_%s.out", job.ID)
+		innerCmd = fmt.Sprintf("g++ %s -o %s && %s", filename, binName, binName)
+	} else {
+		innerCmd = fmt.Sprintf("%s %s", lang, filename)
+	}
+
+	dockerArgs := []string{
+		"run", "--rm",
 		"-v", "/tmp:/tmp",
 		"--cpus=1",
 		"--memory=128m",
 		"--pids-limit=50",
 		langInfo.Image,
-		lang,
-		filename,
-	)
+		"bash", "-c", innerCmd,
+	}
+
+	cmd := exec.Command("docker", dockerArgs...)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

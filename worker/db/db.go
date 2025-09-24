@@ -1,9 +1,10 @@
 package db
 
 import (
-	"github.com/a-khushal/Nautilus/api/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/a-khushal/Nautilus/worker/models"
 )
 
 func InitDB(dsn string) *gorm.DB {

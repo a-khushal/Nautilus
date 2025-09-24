@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/a-khushal/Nautilus/worker/config"
@@ -16,6 +17,7 @@ var (
 )
 
 func main() {
+	fmt.Println("worker started")
 	cfg := config.Get()
 
 	gormDB := db.InitDB(cfg.DBConn)

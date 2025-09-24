@@ -1,12 +1,15 @@
 package processor
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 
+	"github.com/a-khushal/Nautilus/worker/jobs"
 	"github.com/a-khushal/Nautilus/worker/models"
 	"gorm.io/gorm"
+)
+
+var (
+	RUN_CODE = "RUN_CODE"
 )
 
 func Process(jobID string, db *gorm.DB) {
@@ -17,6 +20,10 @@ func Process(jobID string, db *gorm.DB) {
 		return
 	}
 
-	b, _ := json.Marshal(job)
-	fmt.Println(string(b))
+	switch job.Type {
+	case RUN_CODE:
+		jobs.RunCodeJob(job)
+	default:
+		log.Println("Unknown job type:", job.Type)
+	}
 }

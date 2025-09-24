@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/a-khushal/Nautilus/api/models"
 	"github.com/gin-gonic/gin"
@@ -11,8 +12,11 @@ import (
 )
 
 var (
-	ctx  = context.Background()
-	JOBS = "JOBS"
+	ctx           = context.Background()
+	JOBS          = "JOBS"
+	JOB_RESULTS   = "JOB_RESULTS"
+	JOB_SUBMITTED = "JOB_SUBMITTED"
+	JOB_COMPLETED = "JOB_COMPLETED"
 )
 
 func RegisterJobRoutes(r *gin.Engine, db *gorm.DB, rdb *redis.Client) {
@@ -38,9 +42,29 @@ func RegisterJobRoutes(r *gin.Engine, db *gorm.DB, rdb *redis.Client) {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message": "JOB_RECEIVED",
-			"id":      job.ID,
-		})
+		jobChannel := JOB_RESULTS + "_" + job.ID
+		pubsub := rdb.Subscribe(ctx, jobChannel)
+		defer pubsub.Close()
+		ch := pubsub.Channel()
+
+		timeout := time.After(30 * time.Second)
+
+		for {
+			select {
+			case msg := <-ch:
+				c.JSON(http.StatusOK, gin.H{
+					"message": JOB_COMPLETED,
+					"id":      job.ID,
+					"result":  msg.Payload,
+				})
+				return
+			case <-timeout:
+				c.JSON(http.StatusOK, gin.H{
+					"message": JOB_SUBMITTED,
+					"id":      job.ID,
+				})
+				return
+			}
+		}
 	})
 }

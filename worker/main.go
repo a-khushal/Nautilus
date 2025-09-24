@@ -32,6 +32,6 @@ func main() {
 		}
 
 		jobID := result[1]
-		processor.Process(jobID, gormDB)
+		processor.Process(ctx, jobID, gormDB, redisClient)
 	}
 }

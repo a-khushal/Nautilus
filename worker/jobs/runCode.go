@@ -17,29 +17,25 @@ var langMap = map[string]struct {
 	"java":    {Ext: "java", Image: "java-runner:latest"},
 }
 
-func RunCodeJob(job models.Job) {
+func RunCodeJob(job models.Job) []byte {
 	lang, ok := job.Payload["lang"].(string)
 	if !ok {
-		fmt.Println("Invalid language in payload")
-		return
+		return []byte("Invalid language in payload")
 	}
 
 	data, ok := job.Payload["data"].(string)
 	if !ok {
-		fmt.Println("Invalid code data in payload")
-		return
+		return []byte("Invalid code data in payload")
 	}
 
 	langInfo, ok := langMap[lang]
 	if !ok {
-		fmt.Println("Unsupported language:", lang)
-		return
+		return []byte("Unsupported language: " + lang)
 	}
 
 	filename := fmt.Sprintf("/tmp/code_%s.%s", job.ID, langInfo.Ext)
 	if err := os.WriteFile(filename, []byte(data), 0644); err != nil {
-		fmt.Println("Failed to write code file:", err)
-		return
+		return []byte("Failed to write code file: " + err.Error())
 	}
 
 	var innerCmd string
@@ -67,5 +63,5 @@ func RunCodeJob(job models.Job) {
 		fmt.Println("Execution failed:", err)
 	}
 
-	fmt.Println("Execution output:", string(output))
+	return output
 }
